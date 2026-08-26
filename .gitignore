@@ -1,0 +1,36 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.terraform.lock.hcl
+crash.log
+
+# Secrets — NEVER commit these
+secrets.tfvars
+*.secret
+.env
+.env.*
+!.env.example
+
+# Credentials — NEVER commit these
+*.json
+!package.json
+*.pem
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/

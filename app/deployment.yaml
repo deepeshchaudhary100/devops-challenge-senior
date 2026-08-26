@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simpletimeservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simpletimeservice
+  template:
+    metadata:
+      labels:
+        app: simpletimeservice
+    spec:
+      containers:
+        - name: simpletimeservice
+          image: deepesh/simpletimeservice:latest
+          ports:
+            - containerPort: 8080

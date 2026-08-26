@@ -1,0 +1,171 @@
+# =============================================================================
+# CI/CD Pipeline — Build, Push, and Deploy SimpleTimeService
+# =============================================================================
+# Required GitHub Secrets:
+#   DOCKERHUB_USERNAME  — Docker Hub username
+#   DOCKERHUB_TOKEN     — Docker Hub access token (create at hub.docker.com/settings/security)
+#   GCP_SA_KEY          — Base64-encoded GCP service account key JSON
+#   GCP_PROJECT_ID      — GCP project ID
+# =============================================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOCKER_IMAGE: deepesh434/simpletimeservice
+  GCP_REGION: asia-south1
+  GKE_CLUSTER: simpletimeservice-cluster
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Build and Push Docker Image
+  # ---------------------------------------------------------------------------
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify non-root user
+        run: |
+          docker build -t test-image ./app
+          RESULT=$(docker run --rm --entrypoint="" test-image whoami)
+          echo "Container runs as: $RESULT"
+          if [ "$RESULT" = "root" ]; then
+            echo "ERROR: Container is running as root!"
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Terraform Plan (on PRs) / Apply (on main)
+  # ---------------------------------------------------------------------------
+  terraform:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -input=false
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Get Load Balancer IP
+        run: |
+          echo "## Deployment Output" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Load Balancer IP: $(terraform output -raw load_balancer_ip)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "kubectl connect: $(terraform output -raw kubectl_connect_command)" >> $GITHUB_STEP_SUMMARY
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Terraform Plan (for PRs only — no apply)
+  # ---------------------------------------------------------------------------
+  terraform-plan:
+    name: Terraform Plan (PR)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'pull_request'
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -input=false
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
