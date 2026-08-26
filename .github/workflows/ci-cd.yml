@@ -17,7 +17,7 @@ on:
     branches: [main]
 
 env:
-  DOCKER_IMAGE: deepesh434/simpletimeservice
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/simpletimeservice
   GCP_REGION: asia-south1
   GKE_CLUSTER: simpletimeservice-cluster
 
@@ -113,11 +113,15 @@ jobs:
         run: terraform plan -no-color -input=false
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Get Load Balancer IP
         run: |
@@ -169,3 +173,5 @@ jobs:
         run: terraform plan -no-color -input=false
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}

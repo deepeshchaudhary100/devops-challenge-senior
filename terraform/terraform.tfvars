@@ -7,5 +7,5 @@ cluster_name      = "simpletimeservice-cluster"
 node_machine_type = "e2-small"
 min_node_count    = 1
 max_node_count    = 3
-container_image   = "docker.io/deepesh434/simpletimeservice:latest"
+container_image   = "simpletimeservice:latest"
 app_replicas      = 2

@@ -1,6 +1,6 @@
 FROM python:3.12-alpine
 
-LABEL maintainer="deepesh" \
+LABEL maintainer="maintainer" \
       description="SimpleTimeService - returns current timestamp and visitor IP"
 
 # Create non-root user

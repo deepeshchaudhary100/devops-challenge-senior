@@ -138,9 +138,9 @@ curl http://localhost:8080/health
 ### Publish to DockerHub
 
 ```bash
-docker login -u deepesh434
-docker tag simpletimeservice:latest deepesh434/simpletimeservice:latest
-docker push deepesh434/simpletimeservice:latest
+docker login -u <your-dockerhub-username>
+docker tag simpletimeservice:latest <your-dockerhub-username>/simpletimeservice:latest
+docker push <your-dockerhub-username>/simpletimeservice:latest
 ```
 
 ---

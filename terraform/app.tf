@@ -10,6 +10,31 @@ provider "kubernetes" {
 }
 
 # -----------------------------------------------------------------------------
+# Kubernetes Secret — Docker Hub Registry Credentials
+# -----------------------------------------------------------------------------
+resource "kubernetes_secret" "dockerhub" {
+  metadata {
+    name = "dockerhub-credentials"
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  data = {
+    ".dockerconfigjson" = jsonencode({
+      auths = {
+        "https://index.docker.io/v1/" = {
+          username = var.dockerhub_username
+          password = var.dockerhub_password
+          auth     = base64encode("${var.dockerhub_username}:${var.dockerhub_password}")
+        }
+      }
+    })
+  }
+
+  depends_on = [google_container_node_pool.primary_nodes]
+}
+
+# -----------------------------------------------------------------------------
 # Kubernetes Deployment — SimpleTimeService
 # -----------------------------------------------------------------------------
 resource "kubernetes_deployment" "simpletimeservice" {
@@ -37,6 +62,11 @@ resource "kubernetes_deployment" "simpletimeservice" {
       }
 
       spec {
+        # Use Docker Hub credentials to pull the image
+        image_pull_secrets {
+          name = kubernetes_secret.dockerhub.metadata[0].name
+        }
+
         # Run as non-root user (matches Dockerfile USER appuser)
         security_context {
           run_as_non_root = true
@@ -45,7 +75,7 @@ resource "kubernetes_deployment" "simpletimeservice" {
 
         container {
           name  = "simpletimeservice"
-          image = var.container_image
+          image = "docker.io/${var.dockerhub_username}/${var.container_image}"
 
           port {
             container_port = 8080
@@ -92,7 +122,7 @@ resource "kubernetes_deployment" "simpletimeservice" {
     }
   }
 
-  depends_on = [google_container_node_pool.primary_nodes]
+  depends_on = [google_container_node_pool.primary_nodes, kubernetes_secret.dockerhub]
 }
 
 # -----------------------------------------------------------------------------

@@ -43,13 +43,28 @@ variable "max_node_count" {
 # Application
 # -----------------------------------------------------------------------------
 variable "container_image" {
-  description = "Docker image for the SimpleTimeService application."
+  description = "Docker image name (without the username prefix). The full image path is built as: docker.io/<dockerhub_username>/<container_image>."
   type        = string
-  default     = "docker.io/deepesh434/simpletimeservice:latest"
+  default     = "simpletimeservice:latest"
 }
 
 variable "app_replicas" {
   description = "Number of application pod replicas."
   type        = number
   default     = 2
+}
+
+# -----------------------------------------------------------------------------
+# Docker Hub Credentials (sensitive — stored in secrets.tfvars)
+# -----------------------------------------------------------------------------
+variable "dockerhub_username" {
+  description = "Docker Hub username for pulling container images."
+  type        = string
+  sensitive   = true
+}
+
+variable "dockerhub_password" {
+  description = "Docker Hub password or access token."
+  type        = string
+  sensitive   = true
 }
