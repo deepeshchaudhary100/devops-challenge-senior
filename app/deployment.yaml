@@ -1,3 +1,10 @@
+# =============================================================================
+# Reference Kubernetes Deployment Manifest
+# =============================================================================
+# NOTE: This manifest is provided for reference/manual use only.
+# The actual deployment is managed by Terraform via the kubernetes_deployment
+# resource in terraform/app.tf. You do NOT need to apply this file manually.
+# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,6 +21,6 @@ spec:
     spec:
       containers:
         - name: simpletimeservice
-          image: deepesh/simpletimeservice:latest
+          image: <your-dockerhub-username>/simpletimeservice:latest
           ports:
             - containerPort: 8080

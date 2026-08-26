@@ -5,13 +5,14 @@
 # Run the bootstrap setup in backend-setup/ directory:
 #   cd backend-setup && terraform init && terraform apply
 #
-# Then initialize this backend:
-#   terraform init -backend-config="bucket=simpletimeservice-tfstate-project-52f6c9e3"
+# Then initialize this backend with your bucket name:
+#   terraform init -backend-config="bucket=<your-bucket-name>"
 # -----------------------------------------------------------------------------
 
 terraform {
   backend "gcs" {
-    bucket = "simpletimeservice-tfstate-project-52f6c9e3"
+    # Bucket name is provided via:
+    #   terraform init -backend-config="bucket=<your-bucket-name>"
     prefix = "terraform/state"
   }
 }

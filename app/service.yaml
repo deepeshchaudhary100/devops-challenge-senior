@@ -1,3 +1,10 @@
+# =============================================================================
+# Reference Kubernetes Service Manifest
+# =============================================================================
+# NOTE: This manifest is provided for reference/manual use only.
+# The actual service is managed by Terraform via the kubernetes_service
+# resource in terraform/app.tf. You do NOT need to apply this file manually.
+# =============================================================================
 apiVersion: v1
 kind: Service
 metadata:

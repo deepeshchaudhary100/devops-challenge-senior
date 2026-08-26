@@ -14,8 +14,7 @@ secrets.tfvars
 !.env.example
 
 # Credentials — NEVER commit these
-*.json
-!package.json
+sa-key.json
 *.pem
 *.key
 

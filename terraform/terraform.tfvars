@@ -1,7 +1,6 @@
 # Default variable values.
-# Sensitive values (credentials) go in secrets.tfvars (gitignored).
+# Sensitive values (credentials, project_id) go in secrets.tfvars (gitignored).
 
-project_id        = "project-52f6c9e3-3da1-4320-9fa"
 region            = "asia-south1"
 cluster_name      = "simpletimeservice-cluster"
 node_machine_type = "e2-small"

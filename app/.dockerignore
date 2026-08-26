@@ -1,0 +1,24 @@
+# Version control
+.git/
+.gitignore
+
+# Kubernetes manifests (reference only, not needed in container)
+deployment.yaml
+service.yaml
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db

@@ -35,7 +35,6 @@ provider "google" {
 variable "project_id" {
   description = "GCP project ID."
   type        = string
-  default     = "project-52f6c9e3-3da1-4320-9fa"
 }
 
 variable "region" {
@@ -47,7 +46,6 @@ variable "region" {
 variable "bucket_name" {
   description = "Name of the GCS bucket for Terraform state."
   type        = string
-  default     = "simpletimeservice-tfstate-project-52f6c9e3"
 }
 
 # -----------------------------------------------------------------------------

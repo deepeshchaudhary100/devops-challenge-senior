@@ -1,6 +1,6 @@
 FROM python:3.12-alpine
 
-LABEL maintainer="deepesh" \
+LABEL maintainer="maintainer" \
     description="SimpleTimeService - returns current timestamp and visitor IP"
 
 # Create non-root user
@@ -25,5 +25,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-CMD ["python", "app.py"]
-
+# Use gunicorn for production-grade serving
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--access-logfile", "-", "app:app"]

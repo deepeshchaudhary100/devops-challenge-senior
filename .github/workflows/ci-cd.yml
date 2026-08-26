@@ -17,7 +17,7 @@ on:
     branches: [main]
 
 env:
-  DOCKER_IMAGE: deepesh434/simpletimeservice
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/simpletimeservice
   GCP_REGION: asia-south1
   GKE_CLUSTER: simpletimeservice-cluster
 
@@ -60,14 +60,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          load: ${{ github.event_name == 'pull_request' }}
 
       - name: Verify non-root user
         run: |
-          docker build -t test-image ./app
-          RESULT=$(docker run --rm --entrypoint="" test-image whoami)
+          # Use the image already built by buildx (loaded on PRs, pull on pushes)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            IMAGE="$DOCKER_IMAGE:$(echo ${{ github.sha }} | head -c 7)"
+          else
+            IMAGE="$DOCKER_IMAGE:latest"
+            docker pull "$IMAGE"
+          fi
+          RESULT=$(docker run --rm --entrypoint="" "$IMAGE" whoami)
           echo "Container runs as: $RESULT"
           if [ "$RESULT" = "root" ]; then
-            echo "ERROR: Container is running as root!"
+            echo "::error::Container is running as root!"
             exit 1
           fi
 
@@ -106,6 +113,9 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
       - name: Terraform Validate
         run: terraform validate
 
@@ -128,6 +138,8 @@ jobs:
           echo "## Deployment Output" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Load Balancer IP: $(terraform output -raw load_balancer_ip)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Service URL: $(terraform output -raw service_url)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "kubectl connect: $(terraform output -raw kubectl_connect_command)" >> $GITHUB_STEP_SUMMARY
 
@@ -165,6 +177,9 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
 
       - name: Terraform Validate
         run: terraform validate

@@ -150,5 +150,8 @@ resource "kubernetes_service" "simpletimeservice" {
     }
   }
 
+  # Wait for the LoadBalancer IP to be allocated before Terraform completes
+  wait_for_load_balancer = true
+
   depends_on = [kubernetes_deployment.simpletimeservice]
 }

@@ -15,7 +15,7 @@ A minimal microservice that returns the current UTC timestamp and the visitor's 
 
 ```
                         ┌──────────────────────────────────────┐
-                        │     GCP Project (asia-south1)        │
+                        │          GCP Project                 │
                         │                                      │
   Internet ──▶ [ Load Balancer (public subnets) ]              │
                         │         │                            │
@@ -48,7 +48,8 @@ A minimal microservice that returns the current UTC timestamp and the visitor's 
 ├── app/                                # Application source code
 │   ├── app.py                          # Flask web server
 │   ├── Dockerfile                      # Container image (non-root, Alpine)
-│   ├── requirements.txt                # Python dependencies
+│   ├── .dockerignore                   # Docker build context exclusions
+│   ├── requirements.txt                # Python dependencies (Flask + Gunicorn)
 │   ├── deployment.yaml                 # K8s manifest (reference only)
 │   └── service.yaml                    # K8s manifest (reference only)
 ├── terraform/                          # Infrastructure-as-Code
@@ -95,10 +96,10 @@ All sensitive values are managed through one of these mechanisms:
 | Secret | Where to Store | Used By |
 |---|---|---|
 | GCP credentials | `gcloud auth application-default login` | Local Terraform |
-| Docker Hub password | GitHub Secrets (`DOCKERHUB_TOKEN`) | CI/CD pipeline |
-| Docker Hub username | GitHub Secrets (`DOCKERHUB_USERNAME`) | CI/CD pipeline |
+| GCP project ID | `secrets.tfvars` (local) / GitHub Secrets (`GCP_PROJECT_ID`) | Terraform |
+| Docker Hub password | `secrets.tfvars` (local) / GitHub Secrets (`DOCKERHUB_TOKEN`) | Terraform / CI/CD |
+| Docker Hub username | `secrets.tfvars` (local) / GitHub Secrets (`DOCKERHUB_USERNAME`) | Terraform / CI/CD |
 | GCP service account key | GitHub Secrets (`GCP_SA_KEY`) | CI/CD pipeline |
-| GCP project ID | GitHub Secrets (`GCP_PROJECT_ID`) | CI/CD pipeline |
 
 For local development, copy the secrets template:
 
@@ -138,9 +139,9 @@ curl http://localhost:8080/health
 ### Publish to DockerHub
 
 ```bash
-docker login -u deepesh434
-docker tag simpletimeservice:latest deepesh434/simpletimeservice:latest
-docker push deepesh434/simpletimeservice:latest
+docker login -u <your-dockerhub-username>
+docker tag simpletimeservice:latest <your-dockerhub-username>/simpletimeservice:latest
+docker push <your-dockerhub-username>/simpletimeservice:latest
 ```
 
 ---
@@ -154,13 +155,21 @@ docker push deepesh434/simpletimeservice:latest
 gcloud auth login
 
 # Set your project
-gcloud config set project project-52f6c9e3-3da1-4320-9fa
+gcloud config set project <your-gcp-project-id>
 
 # Set up Application Default Credentials (required by Terraform)
 gcloud auth application-default login
 ```
 
-### Step 2: Bootstrap Remote State Backend (one-time)
+### Step 2: Configure Secrets
+
+```bash
+cd terraform
+cp secrets.tfvars.example secrets.tfvars
+# Edit secrets.tfvars with your GCP project ID and Docker Hub credentials
+```
+
+### Step 3: Bootstrap Remote State Backend (one-time)
 
 ```bash
 cd terraform/backend-setup
@@ -169,9 +178,11 @@ terraform init
 terraform apply
 ```
 
-This creates a GCS bucket (`simpletimeservice-tfstate-project-52f6c9e3`) with versioning enabled for Terraform state storage.
+This creates a GCS bucket with versioning enabled for Terraform state storage.
 
-### Step 3: Initialize & Deploy
+> **Note:** Update the `bucket` name in `terraform/backend.tf` to match the bucket created by this step.
+
+### Step 4: Initialize & Deploy
 
 ```bash
 cd terraform
@@ -180,24 +191,24 @@ cd terraform
 terraform init
 
 # Preview the infrastructure changes
-terraform plan
+terraform plan -var-file="secrets.tfvars"
 
 # Apply — creates all resources
-terraform apply
+terraform apply -var-file="secrets.tfvars"
 ```
 
 > **Note:** The GKE cluster takes approximately 8–10 minutes to provision.
 
-### Step 4: Verify Deployment
+### Step 5: Verify Deployment
 
-After `terraform apply` completes, it will output the **Load Balancer IP**:
+After `terraform apply` completes, it will output the **Load Balancer IP** and **Service URL**:
 
 ```bash
-# Get the load balancer IP
-terraform output load_balancer_ip
+# Get the service URL
+terraform output service_url
 
 # Test the service (may take 1-2 minutes for LB to become ready)
-curl http://$(terraform output -raw load_balancer_ip)/
+curl $(terraform output -raw service_url)
 ```
 
 Expected response:
@@ -209,13 +220,11 @@ Expected response:
 }
 ```
 
-### Step 5: (Optional) Connect via kubectl
+### Step 6: (Optional) Connect via kubectl
 
 ```bash
-# Configure kubectl
-gcloud container clusters get-credentials simpletimeservice-cluster \
-    --region asia-south1 \
-    --project project-52f6c9e3-3da1-4320-9fa
+# Configure kubectl (use the command from Terraform output)
+$(terraform output -raw kubectl_connect_command)
 
 # Check pods
 kubectl get pods
@@ -233,7 +242,8 @@ The CI/CD pipeline (`.github/workflows/ci-cd.yml`) automatically:
 1. **Builds** the Docker image
 2. **Verifies** the container runs as non-root
 3. **Pushes** to Docker Hub (tagged with git SHA + `latest`)
-4. **Deploys** via Terraform (apply on `main`, plan-only on PRs)
+4. **Validates** Terraform formatting (`terraform fmt -check`)
+5. **Deploys** via Terraform (apply on `main`, plan-only on PRs)
 
 ### Setup GitHub Secrets
 
@@ -252,24 +262,24 @@ Go to your GitHub repo → **Settings** → **Secrets and variables** → **Acti
 # Create service account
 gcloud iam service-accounts create github-actions \
     --display-name="GitHub Actions CI/CD" \
-    --project=project-52f6c9e3-3da1-4320-9fa
+    --project=<your-gcp-project-id>
 
 # Grant required roles
-SA_EMAIL="github-actions@project-52f6c9e3-3da1-4320-9fa.iam.gserviceaccount.com"
+SA_EMAIL="github-actions@<your-gcp-project-id>.iam.gserviceaccount.com"
 
-gcloud projects add-iam-policy-binding project-52f6c9e3-3da1-4320-9fa \
+gcloud projects add-iam-policy-binding <your-gcp-project-id> \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/container.admin"
 
-gcloud projects add-iam-policy-binding project-52f6c9e3-3da1-4320-9fa \
+gcloud projects add-iam-policy-binding <your-gcp-project-id> \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/compute.admin"
 
-gcloud projects add-iam-policy-binding project-52f6c9e3-3da1-4320-9fa \
+gcloud projects add-iam-policy-binding <your-gcp-project-id> \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/storage.admin"
 
-gcloud projects add-iam-policy-binding project-52f6c9e3-3da1-4320-9fa \
+gcloud projects add-iam-policy-binding <your-gcp-project-id> \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/iam.serviceAccountUser"
 
@@ -298,7 +308,7 @@ Terraform state is stored in a **GCS bucket** with:
 ```bash
 # Destroy the application infrastructure
 cd terraform
-terraform destroy
+terraform destroy -var-file="secrets.tfvars"
 
 # (Optional) Destroy the state bucket
 cd backend-setup
@@ -320,10 +330,10 @@ Type `yes` when prompted. This removes all GCP resources created by Terraform.
 | **Terraform K8s provider** | Deploys app alongside infra — single `terraform apply` does everything |
 | **Alpine-based image** | Minimal footprint (~50MB), reduced attack surface |
 | **Non-root user** | Security best practice, explicitly required by the challenge |
+| **Gunicorn** | Production-grade WSGI server instead of Flask's development server |
 | **Health endpoints** | Enables GKE liveness/readiness probes for self-healing |
 | **GCS remote backend** | Production-grade state management with versioning and locking |
 | **GitHub Actions** | Automated CI/CD — build, test, and deploy on every push to main |
-| **asia-south1** | Region closest to the user for lower latency |
 
 ---
 
@@ -335,3 +345,4 @@ Type `yes` when prompted. This removes all GCP resources created by Terraform.
 - Workload Identity is enabled for secure pod-to-GCP-service authentication.
 - `secrets.tfvars` is gitignored — sensitive values never enter version control.
 - Docker Hub uses **access tokens** (not passwords) for CI/CD authentication.
+- GCP project ID is stored as a secret — not hardcoded in public files.
