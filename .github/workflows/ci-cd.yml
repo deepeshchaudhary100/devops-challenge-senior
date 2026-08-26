@@ -17,7 +17,7 @@ on:
     branches: [main]
 
 env:
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/simpletimeservice
+  DOCKER_IMAGE: deepesh434/simpletimeservice
   GCP_REGION: asia-south1
   GKE_CLUSTER: simpletimeservice-cluster
 

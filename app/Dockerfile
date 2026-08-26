@@ -1,7 +1,7 @@
 FROM python:3.12-alpine
 
-LABEL maintainer="maintainer" \
-      description="SimpleTimeService - returns current timestamp and visitor IP"
+LABEL maintainer="deepesh" \
+    description="SimpleTimeService - returns current timestamp and visitor IP"
 
 # Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
