@@ -122,6 +122,13 @@ resource "kubernetes_deployment" "simpletimeservice" {
     }
   }
 
+  wait_for_rollout = true
+
+  timeouts {
+    create = "15m"
+    update = "15m"
+  }
+
   depends_on = [google_container_node_pool.primary_nodes, kubernetes_secret.dockerhub]
 }
 
