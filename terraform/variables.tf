@@ -51,7 +51,7 @@ variable "container_image" {
 variable "app_replicas" {
   description = "Number of application pod replicas."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 # -----------------------------------------------------------------------------

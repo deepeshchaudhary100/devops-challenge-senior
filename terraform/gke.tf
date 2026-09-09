@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
-  location = var.region
+  location = "${var.region}-a"
 
   # Use the private subnet for the cluster
   network    = google_compute_network.vpc.id
@@ -50,18 +50,18 @@ resource "google_container_cluster" "primary" {
 # -----------------------------------------------------------------------------
 resource "google_container_node_pool" "primary_nodes" {
   name     = "${var.cluster_name}-node-pool"
-  location = var.region
+  location = "${var.region}-a"
   cluster  = google_container_cluster.primary.name
 
   # Autoscaling configuration
   autoscaling {
-    min_node_count = var.min_node_count
-    max_node_count = var.max_node_count
+    min_node_count = 1
+    max_node_count = 2
   }
 
   node_config {
-    machine_type = var.node_machine_type
-    disk_size_gb = 30
+    machine_type = "e2-micro"
+    disk_size_gb = 20
     disk_type    = "pd-standard"
 
     # Use spot VMs to reduce costs during the challenge
