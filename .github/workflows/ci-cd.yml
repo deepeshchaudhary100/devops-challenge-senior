@@ -111,7 +111,10 @@ jobs:
           terraform_version: "1.9"
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          STATE_BUCKET="simpletimeservice-tfstate-${{ secrets.GCP_PROJECT_ID }}"
+          gcloud storage buckets describe gs://${STATE_BUCKET} || gcloud storage buckets create gs://${STATE_BUCKET} --project=${{ secrets.GCP_PROJECT_ID }} --location=${{ env.GCP_REGION }} --uniform-bucket-level-access || true
+          terraform init -input=false -backend-config="bucket=${STATE_BUCKET}"
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
@@ -176,7 +179,10 @@ jobs:
           terraform_version: "1.9"
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          STATE_BUCKET="simpletimeservice-tfstate-${{ secrets.GCP_PROJECT_ID }}"
+          gcloud storage buckets describe gs://${STATE_BUCKET} || gcloud storage buckets create gs://${STATE_BUCKET} --project=${{ secrets.GCP_PROJECT_ID }} --location=${{ env.GCP_REGION }} --uniform-bucket-level-access || true
+          terraform init -input=false -backend-config="bucket=${STATE_BUCKET}"
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
