@@ -74,8 +74,9 @@ resource "kubernetes_deployment" "simpletimeservice" {
         }
 
         container {
-          name  = "simpletimeservice"
-          image = "docker.io/${var.dockerhub_username}/${var.container_image}"
+          name              = "simpletimeservice"
+          image             = "docker.io/${var.dockerhub_username}/${var.container_image}"
+          image_pull_policy = "Always"
 
           port {
             container_port = 8080
