@@ -4,10 +4,27 @@ A minimal microservice that returns the current UTC timestamp and the visitor's 
 
 ## Response Format
 
+### Standard (Challenge Compliant)
+`GET /`
 ```json
 {
-  "timestamp": "2026-08-26T00:12:34Z",
-  "ip": "203.0.113.42"
+  "timestamp": "2026-09-09T17:36:58Z",
+  "ip": "122.161.48.19"
+}
+```
+
+### With Geolocation
+`GET /?location=true` or `GET /location`
+```json
+{
+  "ip": "122.161.48.19",
+  "location": {
+    "city": "Noida",
+    "region": "Uttar Pradesh",
+    "country": "India",
+    "timezone": "Asia/Kolkata"
+  },
+  "timestamp": "2026-09-09T17:36:58Z"
 }
 ```
 

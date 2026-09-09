@@ -48,6 +48,7 @@ jobs:
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
+            type=raw,value=${{ github.sha }}
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
 
@@ -128,6 +129,7 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
+          TF_VAR_container_image: simpletimeservice:${{ github.sha }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
@@ -135,6 +137,7 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
+          TF_VAR_container_image: simpletimeservice:${{ github.sha }}
 
       - name: Get Load Balancer IP
         run: |
@@ -196,3 +199,4 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
+          TF_VAR_container_image: simpletimeservice:${{ github.sha }}
