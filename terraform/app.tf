@@ -144,7 +144,8 @@ resource "kubernetes_service" "simpletimeservice" {
   }
 
   spec {
-    type = "LoadBalancer"
+    type                    = "LoadBalancer"
+    external_traffic_policy = "Local"
 
     selector = {
       app = "simpletimeservice"
@@ -162,3 +163,4 @@ resource "kubernetes_service" "simpletimeservice" {
 
   depends_on = [kubernetes_deployment.simpletimeservice]
 }
+
