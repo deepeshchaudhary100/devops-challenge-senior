@@ -59,6 +59,9 @@ resource "kubernetes_deployment" "simpletimeservice" {
         labels = {
           app = "simpletimeservice"
         }
+        annotations = {
+          "kubectl.kubernetes.io/restartedAt" = timestamp()
+        }
       }
 
       spec {

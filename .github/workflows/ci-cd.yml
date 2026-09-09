@@ -136,12 +136,6 @@ jobs:
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Rollout Restart Deployment
-        run: |
-          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GCP_REGION }}-a --project ${{ secrets.GCP_PROJECT_ID }}
-          kubectl rollout restart deployment/simpletimeservice
-          kubectl rollout status deployment/simpletimeservice --timeout=180s
-
       - name: Get Load Balancer IP
         run: |
           echo "## Deployment Output" >> $GITHUB_STEP_SUMMARY
