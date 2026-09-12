@@ -139,6 +139,13 @@ jobs:
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
           TF_VAR_container_image: video-downloader:${{ github.sha }}
 
+      - name: Force Deployment Rollout
+        run: |
+          gcloud container clusters get-credentials video-downloader-cluster --region europe-west4-a --project ${{ secrets.GCP_PROJECT_ID }}
+          kubectl set image deployment/video-downloader video-downloader=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/video-downloader:${{ github.sha }}
+          kubectl rollout restart deployment/video-downloader
+          kubectl rollout status deployment/video-downloader --timeout=180s
+
       - name: Get Load Balancer IP
         run: |
           echo "## Deployment Output" >> $GITHUB_STEP_SUMMARY

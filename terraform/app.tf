@@ -59,6 +59,9 @@ resource "kubernetes_deployment" "video-downloader" {
         labels = {
           app = "video-downloader"
         }
+        annotations = {
+          "terraform.io/updated_at" = timestamp()
+        }
       }
 
       spec {
