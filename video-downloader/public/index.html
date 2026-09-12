@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamTube — Play & Download YouTube & Instagram Videos</title>
+  <meta name="description" content="Watch and download your favorite YouTube videos and Instagram Reels in high definition (1080p, 720p, MP3) with StreamTube.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <a href="/" class="brand-logo" id="homeLogo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+          </svg>
+        </div>
+        <span class="logo-text">Stream<span>Tube</span></span>
+      </a>
+    </div>
+
+    <!-- Universal Search / Link Bar -->
+    <div class="nav-center">
+      <form class="search-form" id="searchForm">
+        <div class="search-input-wrapper">
+          <svg class="search-lens" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search topic or paste YouTube / Instagram link..." 
+            autocomplete="off"
+            required
+          />
+          <button type="button" class="paste-btn" id="pasteBtn" title="Paste link from clipboard">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Paste</span>
+          </button>
+        </div>
+        <button type="submit" class="search-submit" id="searchSubmitBtn" aria-label="Search">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="nav-right">
+      <!-- Connect Instagram Button -->
+      <button class="ig-auth-btn" id="openIgModalBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        <span id="igAuthBtnText">Connect Instagram</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- App Body Layout -->
+  <div class="app-layout">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-category="all">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-item" data-category="trending">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          <span>Trending</span>
+        </button>
+        <button class="nav-item" data-category="reels">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          <span>Instagram Reels</span>
+        </button>
+        <button class="nav-item" data-category="shorts">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" ry="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          <span>Shorts</span>
+        </button>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-title">Categories</div>
+        <button class="nav-item" data-category="music">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span>Music</span>
+        </button>
+        <button class="nav-item" data-category="gaming">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m10-3h.01m-3 2h.01"/></svg>
+          <span>Gaming</span>
+        </button>
+        <button class="nav-item" data-category="tech">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/></svg>
+          <span>Technology</span>
+        </button>
+        <button class="nav-item" data-category="news">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8m8-4h-8m8-4h-8"/></svg>
+          <span>News</span>
+        </button>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-title">Apps</div>
+        <button class="nav-item" data-category="gmail">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <span>Gmail</span>
+        </button>
+        <button class="nav-item" data-category="facebook">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          <span>Facebook</span>
+        </button>
+        <button class="nav-item" data-category="instagram-app">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          <span>Instagram</span>
+        </button>
+        <button class="nav-item" data-category="settings" id="openSettingsBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>VPN & Proxy</span>
+        </button>
+        <button class="nav-item" data-category="web-browser">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <span>Web Browser</span>
+        </button>
+      </nav>
+    </aside>
+
+
+    <!-- Main Dynamic Content Area -->
+    <main class="main-content" id="mainContent">
+      
+      <!-- Category Chips Bar -->
+      <section class="chips-bar" id="chipsBar">
+        <button class="chip active" data-category="all">All</button>
+        <button class="chip" data-category="trending">🔥 Trending</button>
+        <button class="chip" data-category="reels">📸 Instagram Reels</button>
+        <button class="chip" data-category="music">🎵 Music</button>
+        <button class="chip" data-category="gaming">🎮 Gaming</button>
+        <button class="chip" data-category="tech">⚡ Technology</button>
+        <button class="chip" data-category="news">📰 News</button>
+        <button class="chip" data-category="podcasts">🎙 Podcasts</button>
+        <button class="chip" data-category="shorts">📱 Shorts</button>
+      </section>
+
+      <!-- Universal In-App Browser View -->
+      <section class="browser-view hidden" id="browserView">
+        <div class="browser-toolbar">
+          <button class="browser-back-btn" id="browserCloseBtn">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back to App
+          </button>
+          <div class="browser-address-bar">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="margin-left: 8px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="text" id="browserUrlInput" placeholder="Enter webpage URL (e.g. https://...) and press Enter" />
+            <button class="btn btn-secondary" id="browserGoBtn" style="padding: 4px 10px; font-size: 12px; margin-right: 4px;">Go</button>
+          </div>
+          <button class="btn btn-primary" id="browserExtractBtn" style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 14px;" title="Extract and download video from this page">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Extract Video
+          </button>
+          <button class="btn btn-secondary" id="browserNewTabBtn" style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 12px;" title="Open in regular browser tab">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open in Tab
+          </button>
+        </div>
+        <div style="background: rgba(37,99,235,0.1); border-bottom: 1px solid rgba(37,99,235,0.25); color: #93c5fd; padding: 6px 16px; font-size: 12px; display: flex; align-items: center; gap: 8px;">
+          <span>💡 <strong>Tip:</strong> For YouTube, Instagram Reels, Facebook, or TikTok, paste the link directly in the top search bar to play and download in high resolution.</span>
+        </div>
+        <div class="browser-frame-container">
+          <div class="browser-loading" id="browserLoading">
+            <div class="spinner"></div>
+            <span>Bypassing security and loading site...</span>
+          </div>
+          <iframe id="proxyFrame" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+        </div>
+      </section>
+
+      <!-- Video Feed View (Home & Search) -->
+      <div class="feed-container" id="feedContainer">
+        <div class="feed-header">
+          <h1 class="feed-title" id="feedTitle">Trending Videos</h1>
+          <span class="feed-subtitle" id="feedSubtitle">Explore popular videos to watch &amp; download</span>
+        </div>
+
+        <!-- Video Cards Grid -->
+        <div class="video-grid" id="videoGrid">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Dedicated Watch & Download View -->
+      <section class="watch-view hidden" id="watchView">
+        <div class="watch-left">
+          <!-- Video Player Container with Quick In-Player Download Button -->
+          <div class="player-wrapper">
+            <button class="player-quick-download" id="playerQuickDlBtn" title="Download Current Video">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Download (1080p / MP4)</span>
+            </button>
+            <div class="player-container" id="playerContainer">
+              <!-- Player iframe or HTML5 video dynamically injected -->
+            </div>
+          </div>
+
+          <!-- Video Details Header -->
+          <div class="video-meta">
+            <h2 class="video-title" id="watchTitle">Loading video...</h2>
+            
+            <div class="meta-row">
+              <div class="channel-info">
+                <div class="channel-avatar" id="watchAvatar">C</div>
+                <div class="channel-text">
+                  <span class="channel-name" id="watchChannel">Channel Name</span>
+                  <span class="channel-subs" id="watchViews">Loading stats...</span>
+                </div>
+              </div>
+
+              <div class="action-buttons">
+                <button class="action-btn" id="scrollToDownloadBtn">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Download Options</span>
+                </button>
+                <button class="action-btn" id="shareBtn">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  <span>Share</span>
+                </button>
+                <button class="action-btn" id="closeWatchBtn" title="Back to Feed">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Studio Drawer -->
+          <div class="download-studio" id="downloadStudio">
+            <div class="studio-header">
+              <div class="studio-title-group">
+                <div class="studio-badge">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div>
+                  <h3 class="studio-title">Download Studio</h3>
+                  <p class="studio-desc">Direct streaming download without disk limits</p>
+                </div>
+              </div>
+              <div class="format-tabs">
+                <button class="tab-btn active" data-tab="video">Video (MP4)</button>
+                <button class="tab-btn" data-tab="audio">Audio (MP3)</button>
+              </div>
+            </div>
+
+            <!-- Available Formats List -->
+            <div class="format-list" id="formatList">
+              <div class="loading-formats">
+                <div class="spinner"></div>
+                <span>Extracting available video resolutions and audio streams...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description Box -->
+          <div class="video-desc-box" id="watchDescBox">
+            <p id="watchDesc">No description available for this media.</p>
+          </div>
+        </div>
+
+        <!-- Watch Sidebar: Up Next / Related Queue -->
+        <div class="watch-right">
+          <h3 class="upnext-heading">Related Videos</h3>
+          <div class="related-list" id="relatedList">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">VPN & Proxy Settings</h3>
+        <button class="modal-close" id="closeSettingsModal" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <p class="auth-hint" style="margin-bottom:16px;">
+        Configure a custom proxy to bypass geographical restrictions. Traffic for video extraction and the built-in browser will be routed through this proxy.
+      </p>
+      <form id="proxyForm">
+        <div class="auth-form-group">
+          <label class="auth-label" for="proxyUrlInput">Proxy / VPN URL</label>
+          <input class="auth-input" type="text" id="proxyUrlInput" placeholder="e.g. http://user:pass@12.34.56.78:8080 or socks5://1.2.3.4:1080" />
+        </div>
+        <div style="display:flex; gap:12px; margin-top:8px;">
+          <button type="submit" class="auth-submit-btn" style="flex:1;">Save Proxy</button>
+          <button type="button" class="auth-submit-btn" id="clearProxyBtn" style="flex:1; background:var(--bg-tertiary); color:var(--text-secondary);">Clear Proxy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Connect Instagram / Facebook Modal -->
+  <div class="modal-overlay hidden" id="igModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#f472b6"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          Connect Instagram
+        </h3>
+        <button class="modal-close" id="closeIgModalBtn" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+        Connect your Instagram session to unlock and download <strong>private account reels, videos, and stories</strong> that you follow.
+      </p>
+
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="cookie">Session Cookie (2FA Safe)</button>
+        <button class="modal-tab" data-tab="pass">Username &amp; Password</button>
+      </div>
+
+      <!-- Tab 1: Cookie Form -->
+      <form id="igCookieForm">
+        <div class="auth-form-group">
+          <label class="auth-label" for="igSessionId">Instagram sessionid Cookie</label>
+          <input class="auth-input" type="text" id="igSessionId" placeholder="e.g. 642819283%3A4j1K... (from browser cookies)" required />
+          <p class="auth-hint">
+            💡 How to find: Open instagram.com → Press F12 → Application → Cookies → copy <code>sessionid</code> value.
+          </p>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="igCookieUsername">Your Username (optional)</label>
+          <input class="auth-input" type="text" id="igCookieUsername" placeholder="e.g. john_doe" />
+        </div>
+        <button type="submit" class="auth-submit-btn">Unlock Private Reels &amp; Videos</button>
+      </form>
+
+      <!-- Tab 2: Password Form -->
+      <form id="igPassForm" class="hidden">
+        <div class="auth-form-group">
+          <label class="auth-label" for="igUsername">Instagram Username</label>
+          <input class="auth-input" type="text" id="igUsername" placeholder="your_username" required />
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="igPassword">Instagram Password</label>
+          <input class="auth-input" type="password" id="igPassword" placeholder="••••••••" required />
+          <p class="auth-hint">
+            Note: If your account has Two-Factor Authentication (2FA) enabled, please use the <strong>Session Cookie</strong> tab instead.
+          </p>
+        </div>
+        <button type="submit" class="auth-submit-btn">Login &amp; Connect Account</button>
+      </form>
+
+      <div id="igActiveSession" class="hidden" style="margin-top:16px; text-align:center;">
+        <p style="font-size:13px; color:#4ade80; margin-bottom:12px;">✓ Connected as <strong id="connectedUserText">@user</strong></p>
+        <button id="igLogoutBtn" style="background:var(--bg-tertiary); color:var(--text-secondary); padding:8px 16px; border-radius:var(--radius-sm); cursor:pointer; font-size:12px;">
+          Disconnect Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

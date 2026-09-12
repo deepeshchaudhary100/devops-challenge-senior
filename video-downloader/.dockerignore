@@ -1,0 +1,5 @@
+node_modules
+temp/
+bin/
+.git
+npm-debug.log

@@ -35,13 +35,13 @@ resource "kubernetes_secret" "dockerhub" {
 }
 
 # -----------------------------------------------------------------------------
-# Kubernetes Deployment — SimpleTimeService
+# Kubernetes Deployment — video-downloader
 # -----------------------------------------------------------------------------
-resource "kubernetes_deployment" "simpletimeservice" {
+resource "kubernetes_deployment" "video-downloader" {
   metadata {
-    name = "simpletimeservice"
+    name = "video-downloader"
     labels = {
-      app = "simpletimeservice"
+      app = "video-downloader"
     }
   }
 
@@ -50,14 +50,14 @@ resource "kubernetes_deployment" "simpletimeservice" {
 
     selector {
       match_labels = {
-        app = "simpletimeservice"
+        app = "video-downloader"
       }
     }
 
     template {
       metadata {
         labels = {
-          app = "simpletimeservice"
+          app = "video-downloader"
         }
       }
 
@@ -74,12 +74,12 @@ resource "kubernetes_deployment" "simpletimeservice" {
         }
 
         container {
-          name              = "simpletimeservice"
+          name              = "video-downloader"
           image             = "docker.io/${var.dockerhub_username}/${var.container_image}"
           image_pull_policy = "Always"
 
           port {
-            container_port = 8080
+            container_port = 3000
             protocol       = "TCP"
           }
 
@@ -99,7 +99,7 @@ resource "kubernetes_deployment" "simpletimeservice" {
           liveness_probe {
             http_get {
               path = "/health"
-              port = 8080
+              port = 3000
             }
             initial_delay_seconds = 10
             period_seconds        = 15
@@ -111,7 +111,7 @@ resource "kubernetes_deployment" "simpletimeservice" {
           readiness_probe {
             http_get {
               path = "/health"
-              port = 8080
+              port = 3000
             }
             initial_delay_seconds = 5
             period_seconds        = 10
@@ -136,11 +136,11 @@ resource "kubernetes_deployment" "simpletimeservice" {
 # -----------------------------------------------------------------------------
 # Kubernetes Service — LoadBalancer (public access)
 # -----------------------------------------------------------------------------
-resource "kubernetes_service" "simpletimeservice" {
+resource "kubernetes_service" "video-downloader" {
   metadata {
-    name = "simpletimeservice"
+    name = "video-downloader"
     labels = {
-      app = "simpletimeservice"
+      app = "video-downloader"
     }
   }
 
@@ -149,12 +149,12 @@ resource "kubernetes_service" "simpletimeservice" {
     external_traffic_policy = "Local"
 
     selector = {
-      app = "simpletimeservice"
+      app = "video-downloader"
     }
 
     port {
       port        = 80
-      target_port = 8080
+      target_port = 3000
       protocol    = "TCP"
     }
   }
@@ -162,6 +162,6 @@ resource "kubernetes_service" "simpletimeservice" {
   # Wait for the LoadBalancer IP to be allocated before Terraform completes
   wait_for_load_balancer = true
 
-  depends_on = [kubernetes_deployment.simpletimeservice]
+  depends_on = [kubernetes_deployment.video-downloader]
 }
 

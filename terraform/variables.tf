@@ -18,7 +18,7 @@ variable "region" {
 variable "cluster_name" {
   description = "Name of the GKE cluster."
   type        = string
-  default     = "simpletimeservice-cluster"
+  default     = "video-downloader-cluster"
 }
 
 variable "node_machine_type" {
@@ -45,7 +45,7 @@ variable "max_node_count" {
 variable "container_image" {
   description = "Docker image name (without the username prefix). The full image path is built as: docker.io/<dockerhub_username>/<container_image>."
   type        = string
-  default     = "simpletimeservice:latest"
+  default     = "video-downloader:latest"
 }
 
 variable "app_replicas" {

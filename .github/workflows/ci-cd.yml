@@ -1,5 +1,5 @@
 # =============================================================================
-# CI/CD Pipeline — Build, Push, and Deploy SimpleTimeService
+# CI/CD Pipeline — Build, Push, and Deploy video-downloader
 # =============================================================================
 # Required GitHub Secrets:
 #   DOCKERHUB_USERNAME  — Docker Hub username
@@ -17,9 +17,9 @@ on:
     branches: [main]
 
 env:
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/simpletimeservice
-  GCP_REGION: asia-south1
-  GKE_CLUSTER: simpletimeservice-cluster
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/video-downloader
+  GCP_REGION: europe-west4
+  GKE_CLUSTER: video-downloader-cluster
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./app
+          context: ./video-downloader
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -113,7 +113,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          STATE_BUCKET="simpletimeservice-tfstate-${{ secrets.GCP_PROJECT_ID }}"
+          STATE_BUCKET="video-downloader-tfstate-${{ secrets.GCP_PROJECT_ID }}"
           gcloud storage buckets describe gs://${STATE_BUCKET} || gcloud storage buckets create gs://${STATE_BUCKET} --project=${{ secrets.GCP_PROJECT_ID }} --location=${{ env.GCP_REGION }} --uniform-bucket-level-access || true
           terraform init -input=false -backend-config="bucket=${STATE_BUCKET}"
 
@@ -129,7 +129,7 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          TF_VAR_container_image: simpletimeservice:${{ github.sha }}
+          TF_VAR_container_image: video-downloader:${{ github.sha }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
@@ -137,7 +137,7 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          TF_VAR_container_image: simpletimeservice:${{ github.sha }}
+          TF_VAR_container_image: video-downloader:${{ github.sha }}
 
       - name: Get Load Balancer IP
         run: |
@@ -183,7 +183,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          STATE_BUCKET="simpletimeservice-tfstate-${{ secrets.GCP_PROJECT_ID }}"
+          STATE_BUCKET="video-downloader-tfstate-${{ secrets.GCP_PROJECT_ID }}"
           gcloud storage buckets describe gs://${STATE_BUCKET} || gcloud storage buckets create gs://${STATE_BUCKET} --project=${{ secrets.GCP_PROJECT_ID }} --location=${{ env.GCP_REGION }} --uniform-bucket-level-access || true
           terraform init -input=false -backend-config="bucket=${STATE_BUCKET}"
 
@@ -199,4 +199,4 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_dockerhub_password: ${{ secrets.DOCKERHUB_TOKEN }}
-          TF_VAR_container_image: simpletimeservice:${{ github.sha }}
+          TF_VAR_container_image: video-downloader:${{ github.sha }}
