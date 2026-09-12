@@ -2,8 +2,8 @@
 # Outputs
 # -----------------------------------------------------------------------------
 output "load_balancer_ip" {
-  description = "Public IP address of the SimpleTimeService load balancer."
-  value       = kubernetes_service.simpletimeservice.status[0].load_balancer[0].ingress[0].ip
+  description = "Public IP address of the video-downloader load balancer."
+  value       = kubernetes_service.video-downloader.status[0].load_balancer[0].ingress[0].ip
 }
 
 output "cluster_name" {
@@ -33,6 +33,6 @@ output "kubectl_connect_command" {
 }
 
 output "service_url" {
-  description = "Full URL to access the SimpleTimeService."
-  value       = "http://${kubernetes_service.simpletimeservice.status[0].load_balancer[0].ingress[0].ip}/"
+  description = "Full URL to access the video-downloader."
+  value       = "http://${kubernetes_service.video-downloader.status[0].load_balancer[0].ingress[0].ip}/"
 }
