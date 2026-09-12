@@ -90,6 +90,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const { url } = event.data;
       if (url) {
         console.log('[App] Navigating in-app browser to:', url);
+        // If clicking a video watch page, route directly to Player & Downloader
+        if (/view_video\.php|watch\?v=|youtu\.be|tiktok\.com|reel\/|instagram\.com\/p\//i.test(url)) {
+          browserView.classList.add('hidden');
+          showToast('Extracting video for playback & download...', 'info');
+          openWatchView({
+            url: url,
+            title: 'Selected Video',
+            channel: { name: 'Web Source' },
+            views: 'Online',
+            duration: 'Media',
+            thumbnail: '',
+            platform: /pornhub/i.test(url) ? 'pornhub' : (/instagram/i.test(url) ? 'instagram' : 'youtube')
+          });
+          return;
+        }
         openBrowser(url);
       }
     }
@@ -132,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // If it's a known video platform, route directly to the player & downloader!
-    if (/youtube\.com|youtu\.be|instagram\.com|facebook\.com|fb\.watch|tiktok\.com|twitter\.com|x\.com|vimeo\.com/i.test(url)) {
+    if (/youtube\.com|youtu\.be|instagram\.com|facebook\.com|fb\.watch|tiktok\.com|twitter\.com|x\.com|vimeo\.com|pornhub\.com|view_video\.php/i.test(url)) {
       browserView.classList.add('hidden');
       showToast('Extracting video for playback & download...', 'info');
       openWatchView({
@@ -142,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         views: 'Direct Link',
         duration: 'Media',
         thumbnail: '',
-        platform: /instagram\.com/i.test(url) ? 'instagram' : 'youtube'
+        platform: /pornhub/i.test(url) ? 'pornhub' : (/instagram\.com/i.test(url) ? 'instagram' : 'youtube')
       });
       return;
     }
@@ -339,19 +354,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const query = searchInput.value.trim();
     if (!query) return;
 
-    // Check if it's a direct URL (YouTube, Instagram, Facebook)
-    if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|instagram\.com|facebook\.com|fb\.watch)\/.+/i.test(query)) {
+    // Check if it's a direct URL (YouTube, Instagram, Facebook, Pornhub)
+    if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|instagram\.com|facebook\.com|fb\.watch|tiktok\.com|pornhub\.com)\/.+/i.test(query) || /view_video\.php/i.test(query)) {
       const isIg = /instagram\.com/i.test(query);
-      showToast(isIg ? 'Analyzing Instagram Reel / Video link...' : 'Analyzing video link...', 'info');
+      const isPh = /pornhub\.com|view_video\.php/i.test(query);
+      showToast(isIg ? 'Analyzing Instagram Reel / Video link...' : (isPh ? 'Analyzing video link...' : 'Analyzing video link...'), 'info');
       
       openWatchView({
         url: query,
-        title: isIg ? 'Instagram Reel / Video' : 'Direct Video Link',
-        channel: { name: isIg ? 'Instagram Creator' : 'Online Video' },
+        title: isIg ? 'Instagram Reel / Video' : (isPh ? 'Web Video' : 'Direct Video Link'),
+        channel: { name: isIg ? 'Instagram Creator' : (isPh ? 'Pornhub Creator' : 'Online Video') },
         views: 'Direct Link',
         duration: 'Media',
         thumbnail: '',
-        platform: isIg ? 'instagram' : 'youtube'
+        platform: isIg ? 'instagram' : (isPh ? 'pornhub' : 'youtube')
       });
       return;
     }

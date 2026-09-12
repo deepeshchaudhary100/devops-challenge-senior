@@ -86,12 +86,12 @@ resource "kubernetes_deployment" "video-downloader" {
           # Resource requests and limits
           resources {
             requests = {
-              cpu    = "50m"
-              memory = "64Mi"
+              cpu    = "100m"
+              memory = "128Mi"
             }
             limits = {
-              cpu    = "200m"
-              memory = "128Mi"
+              cpu    = "500m"
+              memory = "512Mi"
             }
           }
 

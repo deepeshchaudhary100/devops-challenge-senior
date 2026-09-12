@@ -201,8 +201,74 @@ async function searchYouTube(query) {
   });
 }
 
+// Helper: Scrape Pornhub video metadata and HLS streams directly
+async function extractPornhubMetadata(url) {
+  const res = await axios.get(url, getAxiosConfig({
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Cookie': 'accessAgeDisclaimerPH=1; hasVisited=1; age_verified=1; platform=pc; bs=1; il=1',
+      'Referer': 'https://www.pornhub.com/'
+    },
+    timeout: 15000
+  }));
+  const html = res.data.toString();
+  const match = html.match(/var\s+CLIPS_DATA\s*=\s*({[\s\S]*?});/);
+  if (!match) throw new Error('Could not find CLIPS_DATA on Pornhub page');
+
+  const data = JSON.parse(match[1]);
+  const streams = data.mediaDefinition || [];
+
+  const formats = streams.filter(s => s.videoUrl && s.format === 'hls').map(s => ({
+    format_id: s.videoUrl,
+    quality: `${s.quality}p`,
+    height: parseInt(s.quality, 10) || 720,
+    ext: 'mp4',
+    vcodec: 'h264',
+    url: s.videoUrl,
+    filesize: 0,
+    type: 'video'
+  }));
+
+  const directMp4 = streams.find(s => s.format === 'mp4' && s.videoUrl);
+  if (directMp4) {
+    formats.push({
+      format_id: directMp4.videoUrl,
+      quality: '720p Direct',
+      height: 720,
+      ext: 'mp4',
+      vcodec: 'h264',
+      url: directMp4.videoUrl,
+      filesize: 0,
+      type: 'video'
+    });
+  }
+
+  const bestStream = formats[0] || {};
+
+  return {
+    id: data.videoId ? String(data.videoId) : 'ph_' + Date.now(),
+    title: data.videoTitle || 'Pornhub Video',
+    thumbnail: data.posterUrl || '',
+    uploader: 'Pornhub Creator',
+    channel: 'Pornhub',
+    duration: data.videoDuration || 0,
+    url: bestStream.url || '',
+    formats: formats
+  };
+}
+
 // Helper: Run yt-dlp to extract JSON metadata
-function extractMetadata(url) {
+async function extractMetadata(url) {
+  if (/pornhub\.com/i.test(url)) {
+    try {
+      const phData = await extractPornhubMetadata(url);
+      return phData;
+    } catch (phErr) {
+      console.log('[EXTRACT] Dedicated Pornhub extractor error, falling back to yt-dlp:', phErr.message);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(ytDlpPath)) {
       return reject(new Error('yt-dlp binary not found at ' + ytDlpPath));
@@ -212,7 +278,10 @@ function extractMetadata(url) {
       '--dump-single-json',
       '--no-warnings',
       '--no-playlist',
-      '--skip-download'
+      '--skip-download',
+      '--add-header', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      '--add-header', 'Cookie: accessAgeDisclaimerPH=1; hasVisited=1; age_verified=1; platform=pc; bs=1; il=1',
+      '--referer', url
     ];
 
     // If cookies exist, pass them for private Instagram/Facebook content
@@ -572,25 +641,29 @@ app.get('/api/download', (req, res) => {
   res.setHeader('Content-Type', isAudio ? 'audio/mp4' : 'video/mp4');
 
   // Format selection for yt-dlp
-  let formatArg;
-  if (isAudio) {
-    formatArg = 'bestaudio[ext=m4a]/bestaudio/best';
-  } else {
-    const h = parseInt(quality, 10);
-    if (!isNaN(h) && h > 0) {
-      formatArg = `bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${h}][ext=mp4]/best[height<=${h}]/best`;
-    } else {
-      formatArg = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
-    }
-  }
-
-  console.log(`[DOWNLOAD] Starting stream for "${filename}" (format: ${formatArg})`);
-
   const args = [
-    '-f', formatArg,
     '--no-playlist',
-    '--no-warnings'
+    '--no-warnings',
+    '--add-header', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    '--add-header', 'Cookie: accessAgeDisclaimerPH=1; hasVisited=1; age_verified=1; platform=pc; bs=1; il=1',
+    '--referer', 'https://www.pornhub.com/'
   ];
+
+  // If url is not an HLS master playlist, use format selection
+  if (!url.includes('.m3u8')) {
+    let formatArg;
+    if (isAudio) {
+      formatArg = 'bestaudio[ext=m4a]/bestaudio/best';
+    } else {
+      const h = parseInt(quality, 10);
+      if (!isNaN(h) && h > 0) {
+        formatArg = `bestvideo[height<=${h}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${h}][ext=mp4]/best[height<=${h}]/best`;
+      } else {
+        formatArg = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+      }
+    }
+    args.push('-f', formatArg);
+  }
 
   // If cookies or credentials exist, pass to yt-dlp for private videos
   if (fs.existsSync(cookiesPath)) {
@@ -739,11 +812,31 @@ app.get('/api/extract', async (req, res) => {
   }
 });
 
+app.get('/api/stream', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) return res.status(400).send('URL is required');
+
+  try {
+    const isAdult = /phncdn\.com|pornhub\.com/i.test(targetUrl);
+    const streamRes = await axios.get(targetUrl, getAxiosConfig({
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Referer': isAdult ? 'https://www.pornhub.com/' : 'https://www.google.com/'
+      }
+    }));
+    for (const [k, v] of Object.entries(streamRes.headers)) {
+      res.setHeader(k, v);
+    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    streamRes.data.pipe(res);
+  } catch (err) {
+    res.status(500).send('Stream error: ' + err.message);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // 5. GET /api/proxy — In-App Browser (strips framing blocks, injects video detector)
-// Note: Only works for sites that allow server-side fetching.
-// Sites like Gmail, Facebook, Instagram block server-side requests (ETIMEDOUT).
-// For those, the UI opens them in a new tab instead.
 // ---------------------------------------------------------------------------
 app.get('/api/proxy', async (req, res) => {
   const targetUrl = req.query.url;
@@ -751,16 +844,22 @@ app.get('/api/proxy', async (req, res) => {
 
   console.log('[PROXY] Fetching:', targetUrl);
   try {
+    const isAdult = /pornhub\.com|phncdn\.com/i.test(targetUrl);
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'identity',
+      'Referer': isAdult ? 'https://www.pornhub.com/' : 'https://www.google.com/'
+    };
+    if (isAdult) {
+      headers['Cookie'] = 'accessAgeDisclaimerPH=1; hasVisited=1; age_verified=1; platform=pc; bs=1; il=1';
+    }
+
     const response = await axios.get(targetUrl, getAxiosConfig({
       responseType: 'arraybuffer',
-      timeout: 30000, // 30s timeout to accommodate slow/congested servers
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'identity',
-        'Referer': 'https://www.google.com/',
-      },
+      timeout: 30000,
+      headers,
       maxRedirects: 5,
       validateStatus: () => true
     }));
@@ -784,31 +883,34 @@ app.get('/api/proxy', async (req, res) => {
       // 1. Neutralize anti-proxy guards, frame-busting scripts & forced redirects
       html = html.replace(/<script[^>]*>(?:(?!<\/script>)[\s\S])*?(?:Anti-proxy guard|location\.replace\(|top\.location|window\.top)(?:(?!<\/script>)[\s\S])*?<\/script>/gi, '<!-- anti-proxy script neutralized -->');
 
-      // 1b. Strip ad network & popunder scripts (e.g. candy.ai, excavatenearbywand, lucky-examination, monetag)
+      // 1b. Strip ad network & popunder scripts
       html = html.replace(/<script[^>]*src=["'][^"']*(?:excavatenearbywand|lucky-examination|freepush|monetag|popads|propellerads|adsterra|trafficjunky|juicyads|exoclick)[^"']*["'][^>]*>(?:(?!<\/script>)[\s\S])*?<\/script>/gi, '<!-- ad script stripped -->');
       html = html.replace(/<script[^>]*>(?:(?!<\/script>)[\s\S])*?(?:lucky-examination|excavatenearbywand|decodeURI\("wd%60|popunder)(?:(?!<\/script>)[\s\S])*?<\/script>/gi, '<!-- popunder script stripped -->');
+
+      // 1c. CRITICAL: Strip all target attributes so links NEVER escape the proxy iframe
+      html = html.replace(/\btarget=["'][^"']*["']/gi, '');
 
       // 2. Strip any meta tags enforcing CSP or frame restrictions
       html = html.replace(/<meta[^>]+http-equiv=["'](?:content-security-policy|x-frame-options)["'][^>]*>/gi, '');
 
-      // 3. Inject <base> so relative resources load correctly
+      // 3. Inject base & high-priority navigation hook into <head>
       const baseTag = `<base href="${origin}/">`;
-      if (html.includes('<head>')) html = html.replace('<head>', `<head>\n    ${baseTag}`);
-      else html = `${baseTag}\n${html}`;
-
-      // 4. Inject helper script to keep link clicks inside the proxy and disarm ad popunders
-      const proxyNavScript = `
+      const headNavScript = `
       <script>
       (function() {
-        // Disarm popup/popunder calls (e.g. candy.ai popups)
-        try {
-          window.open = function(url) {
-            console.log('[StreamTube Proxy] Blocked popup to:', url);
-            return null;
-          };
-        } catch(e) {}
+        // Disarm popup/popunder calls & keep opened links inside the proxy
+        window.open = function(url) {
+          if (url && typeof url === 'string') {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'STREAMTUBE_NAVIGATE', url: url }, '*');
+            } else {
+              window.location.href = window.location.origin + '/api/proxy?url=' + encodeURIComponent(url);
+            }
+          }
+          return null;
+        };
 
-        // Disarm popunder full-screen overlay capture divs
+        // Capture all clicks in capture mode to prevent escaping proxy
         document.addEventListener('click', function(e) {
           try {
             var target = e.target;
@@ -818,7 +920,6 @@ app.get('/api/proxy', async (req, res) => {
                 e.preventDefault();
                 e.stopPropagation();
                 target.remove();
-                console.log('[StreamTube Proxy] Removed invisible ad click-jack overlay');
                 return;
               }
             }
@@ -826,32 +927,42 @@ app.get('/api/proxy', async (req, res) => {
 
           var a = e.target.closest('a');
           if (a && a.href && !a.href.startsWith('javascript:') && !a.href.startsWith('#')) {
-            // Block known ad sponsor redirect links (e.g. candy.ai)
             if (/candy\\.ai|lucky-examination|excavatenearbywand|trafficjunky|adsterra|monetag|popads/i.test(a.href)) {
               e.preventDefault();
               e.stopPropagation();
-              console.log('[StreamTube Proxy] Blocked navigation to ad sponsor:', a.href);
+              e.stopImmediatePropagation();
               return;
             }
 
             e.preventDefault();
             e.stopPropagation();
-            try {
-              if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'STREAMTUBE_NAVIGATE', url: a.href }, '*');
-                return;
-              }
-            } catch(err) {}
-            window.location.href = window.location.origin + '/api/proxy?url=' + encodeURIComponent(a.href);
+            e.stopImmediatePropagation();
+
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'STREAMTUBE_NAVIGATE', url: a.href }, '*');
+            } else {
+              window.location.href = window.location.origin + '/api/proxy?url=' + encodeURIComponent(a.href);
+            }
           }
         }, true);
       })();
       </script>`;
 
-      // 5. Inject video detector and navigation helper
-      const scriptTag = `<script src="/video-detector.js"></script>\n${proxyNavScript}`;
-      if (html.includes('</body>')) html = html.replace('</body>', `\n${scriptTag}\n</body>`);
-      else html += `\n${scriptTag}`;
+      if (html.includes('<head>')) {
+        html = html.replace('<head>', `<head>\n    ${baseTag}\n    ${headNavScript}`);
+      } else {
+        html = `${baseTag}\n${headNavScript}\n${html}`;
+      }
+
+      // 4. Inject Video Detector inline (so <base> does not misdirect its loading)
+      let videoDetectorCode = '';
+      try {
+        videoDetectorCode = fs.readFileSync(path.join(__dirname, 'public', 'video-detector.js'), 'utf8');
+      } catch(e) {}
+
+      const injectedFooter = `<script>${videoDetectorCode}</script>`;
+      if (html.includes('</body>')) html = html.replace('</body>', `\n${injectedFooter}\n</body>`);
+      else html += `\n${injectedFooter}`;
 
       res.removeHeader('content-length');
       res.send(html);
